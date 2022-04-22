@@ -128,18 +128,18 @@ CREATE TABLE IF NOT EXISTS "Check"
 
     id_agreement   INT UNIQUE    NOT NULL,
     CONSTRAINT fk FOREIGN KEY (id_agreement) REFERENCES "SupplyAgreement" (agreement_id)
-        ON DELETE RESTRICT
+        ON DELETE CASCADE
         ON UPDATE CASCADE,
     account_number varchar(20)   NOT NULL,
     sum            INT           NOT NULL
         CONSTRAINT positive_check CHECK ( "Check".sum > 0 )
 );
 
-
 CREATE TABLE IF NOT EXISTS "Order"
 (
     id_order       INT GENERATED ALWAYS AS IDENTITY NOT NULL,
-    id_institution INT                              NOT NULL REFERENCES "Institution" (id_institution)
+    id_institution INT                              NOT NULL,
+    CONSTRAINT fk FOREIGN KEY (id_institution) REFERENCES "Institution" (id_institution)
         ON DELETE RESTRICT
         ON UPDATE CASCADE,
 
