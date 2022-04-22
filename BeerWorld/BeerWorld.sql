@@ -185,7 +185,7 @@ CREATE TABLE IF NOT EXISTS "Invoice"
     id_part      INT UNIQUE                       NOT NULL,
 
     CONSTRAINT fk1
-        FOREIGN KEY (id_order) REFERENCES "Order" (id_order)
+        FOREIGN KEY (id_order) REFERENCES "Orders" (id_order)
             ON DELETE RESTRICT
             ON UPDATE CASCADE,
 
