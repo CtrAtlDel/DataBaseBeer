@@ -1,50 +1,3 @@
-CREATE TYPE beer_container AS ENUM ('bottle', 'barrel', 'tank', 'keg');
-CREATE TYPE type_institution AS ENUM ('restaurant', 'bar', 'snack-bar');
-CREATE TYPE status_institution AS ENUM ('the best', 'middle', 'not so bad');
-CREATE TYPE status_half_part AS ENUM ('inBrewery', 'inWareHouse', 'inInstitution');
-CREATE TYPE type_of_payment AS ENUM ('cash', 'online');
-CREATE DOMAIN type_phone_number AS varchar(10)
-    CHECK (
-        VALUE ~ '^((8|\+7)[\- ]?)?(\(?\d{3}\)?[\- ]?)?[\d\- ]{7,10}$'
-        );
-
-
-CREATE TABLE IF NOT EXISTS "Institution"
-(
-    id_institution INT GENERATED ALWAYS AS IDENTITY NOT NULL,
-
-    name           varchar(20)                      NOT NULL
-        CONSTRAINT empty_column CHECK ( name != '' ),
-    address        varchar(20)                      NOT NULL
-        CONSTRAINT empty_address CHECK ( "Institution".address != '' ),
-    phone_number   type_phone_number                NOT NULL
-        CONSTRAINT empty_phone_number CHECK ( "Institution".phone_number != ''),
-    type           type_institution                 NOT NULL,
-    status         status_institution               NOT NULL,
-    PRIMARY KEY (id_institution)
-);
-CREATE UNIQUE INDEX name_indx ON "Institution" (lower(name));
-
-
-CREATE TABLE IF NOT EXISTS "WareHouse"
-(
-    id_wareHouse    INT GENERATED ALWAYS AS IDENTITY NOT NULL,
-    university_code char(10)                         NOT NULL
-        CONSTRAINT empty_code CHECK ( "WareHouse".university_code != '' ),
-    address         varchar(30)                      NOT NULL
-        CONSTRAINT empty_address CHECK ( "WareHouse".address != '' ),
-    capacity        int                              NOT NULL DEFAULT 10,
-    phone_number    type_phone_number                NOT NULL
-        CONSTRAINT empty_phone_number CHECK ("WareHouse".phone_number != ''),
-    boss            varchar(20)                      NOT NULL,
-    information     varchar(1000)                    NOT NULL,
-    coordinates     point                            NOT NULL,
-
-    PRIMARY KEY (id_wareHouse)
-);
-CREATE UNIQUE INDEX wareHouse_number_indx ON "WareHouse" (phone_number);
-CREATE INDEX wareHouse_code_indx ON "WareHouse" (lower(university_code));
-
 CREATE TABLE IF NOT EXISTS "InstitutionWarehouse"
 (
     id_wareHouse   INT UNIQUE NOT NULL,
@@ -98,10 +51,7 @@ CREATE TABLE IF NOT EXISTS "SortBrewery" -- ??? fk unique?
 CREATE TABLE IF NOT EXISTS "SupplyAgreement"
 (
     agreement_id        SERIAL          NOT NULL UNIQUE PRIMARY KEY,
-    id_order            INT             NOT NULL,
-    CONSTRAINT fk FOREIGN KEY (id_order) REFERENCES "Order" (id_order)
-        ON DELETE RESTRICT
-        ON UPDATE CASCADE,
+
 
     name_beer           varchar(20)     NOT NULL,
     container           beer_container  NOT NULL,
@@ -151,19 +101,35 @@ CREATE TABLE IF NOT EXISTS "Orders"
     all_sum        INT                              NOT NULL
         CONSTRAINT positive_all_size CHECK ( all_sum > 0),                  -- Вся сумма
     all_count      INT                              NOT NULL DEFAULT 0,     -- Количество частей
-    isAllPayed     BOOLEAN                                   DEFAULT FALSE, --  Оплачено ли все
 
 
     half           INT                              NOT NULL                -- какая по счету часть
         CONSTRAINT positive_half CHECK ( half > 0 ),
-    all_size       INT                              NOT NULL                -- все части
-        CONSTRAINT positive_all_size CHECK ( all_size > 0 AND all_size > half ),
+    all_half       INT                              NOT NULL                -- все части
+        CONSTRAINT positive_all_size CHECK ( all_half > 0 AND all_half > half ),
     tracking       status_half_part                 NOT NULL DEFAULT 'inBrewery',
 
     isHalfPayed    BOOLEAN                                   DEFAULT FALSE, -- часть оплачна?
+    isAllPayed     BOOLEAN                                   DEFAULT FALSE, --  Оплачено ли все
 
     PRIMARY KEY (id_order)
 );
+--
+-- CREATE TABLE IF NOT EXISTS "HalfOrder"
+-- (
+--     order_id    INT              NOT NULL,
+--     CONSTRAINT fk FOREIGN KEY (order_id) REFERENCES "Order"
+--         ON DELETE CASCADE
+--         ON UPDATE CASCADE,
+--
+--     half        INT              NOT NULL               -- какая пр счету часть
+--         CONSTRAINT positive_half CHECK ( half > 0 ),
+--     all_size    INT              NOT NULL               -- все части
+--         CONSTRAINT positive_all_size CHECK ( all_size > 0 AND all_size > half ),
+--     tracking    status_half_part NOT NULL DEFAULT 'inBrewery',
+--
+--     isHalfPayed BOOLEAN                   DEFAULT FALSE -- часть оплачна
+-- );
 
 CREATE TABLE IF NOT EXISTS "Part"
 (
@@ -213,7 +179,6 @@ CREATE TABLE IF NOT EXISTS "Beer"
 (
     id_beer         INT GENERATED ALWAYS AS IDENTITY,
     id_part         INT            NOT NULL,
-
     CONSTRAINT fk1 FOREIGN KEY (id_part) REFERENCES "Part" (id_part)
         ON DELETE NO ACTION
         ON UPDATE RESTRICT,
@@ -241,3 +206,7 @@ CREATE TABLE IF NOT EXISTS "Beer"
     PRIMARY KEY (id_beer)
 );
 CREATE UNIQUE INDEX beer_index ON "Beer" (name_of_beer);
+
+
+
+
