@@ -1,3 +1,50 @@
+CREATE TYPE beer_container AS ENUM ('bottle', 'barrel', 'tank', 'keg');
+CREATE TYPE type_institution AS ENUM ('restaurant', 'bar', 'snack-bar');
+CREATE TYPE status_institution AS ENUM ('the best', 'middle', 'not so bad');
+CREATE TYPE status_half_part AS ENUM ('inBrewery', 'inWareHouse', 'inInstitution');
+CREATE TYPE type_of_payment AS ENUM ('cash', 'online');
+CREATE DOMAIN type_phone_number AS varchar(10)
+    CHECK (
+        VALUE ~ '^((8|\+7)[\- ]?)?(\(?\d{3}\)?[\- ]?)?[\d\- ]{7,10}$'
+        );
+
+
+CREATE TABLE IF NOT EXISTS "Institution"
+(
+    id_institution INT GENERATED ALWAYS AS IDENTITY NOT NULL,
+
+    name           varchar(20)                      NOT NULL
+        CONSTRAINT empty_column CHECK ( name != '' ),
+    address        varchar(20)                      NOT NULL
+        CONSTRAINT empty_address CHECK ( "Institution".address != '' ),
+    phone_number   type_phone_number                NOT NULL
+        CONSTRAINT empty_phone_number CHECK ( "Institution".phone_number != ''),
+    type           type_institution                 NOT NULL,
+    status         status_institution               NOT NULL,
+    PRIMARY KEY (id_institution)
+);
+CREATE UNIQUE INDEX name_indx ON "Institution" (lower(name));
+
+
+CREATE TABLE IF NOT EXISTS "WareHouse"
+(
+    id_wareHouse    INT GENERATED ALWAYS AS IDENTITY NOT NULL,
+    university_code char(10)                         NOT NULL
+        CONSTRAINT empty_code CHECK ( "WareHouse".university_code != '' ),
+    address         varchar(30)                      NOT NULL
+        CONSTRAINT empty_address CHECK ( "WareHouse".address != '' ),
+    capacity        int                              NOT NULL DEFAULT 10,
+    phone_number    type_phone_number                NOT NULL
+        CONSTRAINT empty_phone_number CHECK ("WareHouse".phone_number != ''),
+    boss            varchar(20)                      NOT NULL,
+    information     varchar(1000)                    NOT NULL,
+    coordinates     point                            NOT NULL,
+
+    PRIMARY KEY (id_wareHouse)
+);
+CREATE UNIQUE INDEX wareHouse_number_indx ON "WareHouse" (phone_number);
+CREATE INDEX wareHouse_code_indx ON "WareHouse" (lower(university_code));
+
 CREATE TABLE IF NOT EXISTS "InstitutionWarehouse"
 (
     id_wareHouse   INT UNIQUE NOT NULL,
@@ -50,31 +97,31 @@ CREATE TABLE IF NOT EXISTS "SortBrewery" -- ??? fk unique?
 
 CREATE TABLE IF NOT EXISTS "SupplyAgreement"
 (
-    agreement_id        SERIAL          NOT NULL UNIQUE PRIMARY KEY,
+    agreement_id        INT GENERATED ALWAYS AS IDENTITY NOT NULL,
+
+    name_beer           varchar(20)                      NOT NULL,
+    container           beer_container                   NOT NULL,
+    count_of_beer       INT                              NOT NULL CHECK (count_of_beer > 0),
+    cost                MONEY                            NOT NULL,
+    start_date          DATE                             NOT NULL,
+    account_number      varchar(20)                      NOT NULL,
+    prepayment          MONEY                            NOT NULL CHECK (prepayment > 0),
+
+    name_of_institution varchar(20)                      NOT NULL,
 
 
-    name_beer           varchar(20)     NOT NULL,
-    container           beer_container  NOT NULL,
-    count_of_beer       INT             NOT NULL CHECK (count_of_beer > 0),
-    cost                MONEY           NOT NULL,
-    start_date          DATE            NOT NULL,
-    account_number      varchar(20)     NOT NULL,
-    prepayment          MONEY           NOT NULL CHECK (prepayment > 0),
-
-    name_of_institution varchar(20)     NOT NULL,
-
-
-    delivery_period     INTERVAL        NOT NULL,
-    count_of_delivery   INT             NOT NULL
+    delivery_period     INTERVAL                         NOT NULL,
+    count_of_delivery   INT                              NOT NULL
         CONSTRAINT positive_count CHECK ( count_of_delivery > 0 ),
-    pay                 type_of_payment NOT NULL DEFAULT 'cash',
+    pay                 type_of_payment                  NOT NULL DEFAULT 'cash',
 
-    isImporter          BOOLEAN                  DEFAULT FALSE
+    isImporter          BOOLEAN                                   DEFAULT FALSE,
+    PRIMARY KEY (agreement_id)
 );
 
 CREATE TABLE IF NOT EXISTS "Check"
 (
-    id_check       SERIAL UNIQUE NOT NULL PRIMARY KEY,
+    id_check       INT GENERATED ALWAYS AS IDENTITY NOT NULL ,
 
     id_agreement   INT UNIQUE    NOT NULL,
     CONSTRAINT fk FOREIGN KEY (id_agreement) REFERENCES "SupplyAgreement" (agreement_id)
@@ -82,7 +129,9 @@ CREATE TABLE IF NOT EXISTS "Check"
         ON UPDATE CASCADE,
     account_number varchar(20)   NOT NULL,
     sum            INT           NOT NULL
-        CONSTRAINT positive_check CHECK ( "Check".sum > 0 )
+        CONSTRAINT positive_check CHECK ( "Check".sum > 0 ),
+
+    PRIMARY KEY(id_check)
 );
 
 CREATE TABLE IF NOT EXISTS "Orders"
@@ -206,7 +255,4 @@ CREATE TABLE IF NOT EXISTS "Beer"
     PRIMARY KEY (id_beer)
 );
 CREATE UNIQUE INDEX beer_index ON "Beer" (name_of_beer);
-
-
-
 
