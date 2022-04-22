@@ -105,7 +105,7 @@ CREATE TABLE IF NOT EXISTS "SupplyAgreement"
     cost                MONEY                            NOT NULL,
     start_date          DATE                             NOT NULL,
     account_number      varchar(20)                      NOT NULL,
-    prepayment          MONEY                            NOT NULL CHECK (prepayment > 0),
+    prepayment          MONEY                            NOT NULL,
 
     name_of_institution varchar(20)                      NOT NULL,
 
@@ -121,34 +121,34 @@ CREATE TABLE IF NOT EXISTS "SupplyAgreement"
 
 CREATE TABLE IF NOT EXISTS "Check"
 (
-    id_check       INT GENERATED ALWAYS AS IDENTITY NOT NULL ,
+    id_check       INT GENERATED ALWAYS AS IDENTITY NOT NULL,
 
-    id_agreement   INT UNIQUE    NOT NULL,
+    id_agreement   INT UNIQUE                       NOT NULL,
     CONSTRAINT fk FOREIGN KEY (id_agreement) REFERENCES "SupplyAgreement" (agreement_id)
         ON DELETE CASCADE
         ON UPDATE CASCADE,
-    account_number varchar(20)   NOT NULL,
-    sum            INT           NOT NULL
+    account_number varchar(20)                      NOT NULL,
+    sum            INT                              NOT NULL
         CONSTRAINT positive_check CHECK ( "Check".sum > 0 ),
 
-    PRIMARY KEY(id_check)
+    PRIMARY KEY (id_check)
 );
 
 CREATE TABLE IF NOT EXISTS "Orders"
 (
     id_order       INT GENERATED ALWAYS AS IDENTITY NOT NULL,
     id_institution INT                              NOT NULL,
-    CONSTRAINT fk FOREIGN KEY (id_institution) REFERENCES "Institution" (id_institution)
+    CONSTRAINT fk1 FOREIGN KEY (id_institution) REFERENCES "Institution" (id_institution)
         ON DELETE RESTRICT
         ON UPDATE CASCADE,
 
     agreement_id   INT                              NOT NULL,
-    CONSTRAINT fk FOREIGN KEY (agreement_id) REFERENCES "SupplyAgreement" (agreement_id)
+    CONSTRAINT fk2 FOREIGN KEY (agreement_id) REFERENCES "SupplyAgreement" (agreement_id)
         ON DELETE RESTRICT
         ON UPDATE CASCADE,
 
     all_sum        INT                              NOT NULL
-        CONSTRAINT positive_all_size CHECK ( all_sum > 0),                  -- Вся сумма
+        CONSTRAINT positive_size CHECK ( all_sum > 0),                  -- Вся сумма
     all_count      INT                              NOT NULL DEFAULT 0,     -- Количество частей
 
 
@@ -255,4 +255,5 @@ CREATE TABLE IF NOT EXISTS "Beer"
     PRIMARY KEY (id_beer)
 );
 CREATE UNIQUE INDEX beer_index ON "Beer" (name_of_beer);
+
 
