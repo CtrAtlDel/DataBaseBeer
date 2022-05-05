@@ -100,10 +100,16 @@ CREATE TABLE IF NOT EXISTS "Sort"
 );
 CREATE UNIQUE INDEX sort_name_indx ON "Sort" (lower(sort_name));
 
+INSERT INTO "Sort"(sort_name)
+VALUES ('Ale'),
+       ('Lager'),
+       ('Porter');
+
+
 CREATE TABLE IF NOT EXISTS "SortBrewery"
 (
-    id_sort    INT        NOT NULL,
-    id_brewery INT UNIQUE NOT NULL,
+    id_sort    INT NOT NULL,
+    id_brewery INT NOT NULL,
 
     CONSTRAINT fk1 FOREIGN KEY (id_sort) REFERENCES "Sort" (id_sort)
         ON DELETE RESTRICT
@@ -115,6 +121,15 @@ CREATE TABLE IF NOT EXISTS "SortBrewery"
 
     UNIQUE (id_sort, id_brewery)
 );
+
+INSERT INTO "SortBrewery"(id_sort, id_brewery)
+VALUES ('1', '1'),
+       ('1', '2'),
+       ('1', '3'),
+       ('2', '1'),
+       ('2', '3');
+
+
 
 CREATE TABLE IF NOT EXISTS "SupplyAgreement"
 (
@@ -203,6 +218,25 @@ CREATE TABLE IF NOT EXISTS "Part"
     size_part  int                              NOT NUll CHECK ( "Part".size_part > 0 ),
     PRIMARY KEY (id_part)
 );
+CREATE OR REPLACE PROCEDURE create_partion(idInvoice integer)
+    LANGUAGE plpgsql
+AS
+$$
+DECLARE
+    cur          refcursor;
+    beer_name    varchar(20);
+    id_brew  int;
+BEGIN
+
+    SELECT "Brewery".id_brewery INTO id_brew
+    FROM "Brewery"
+             JOIN "Sort" AS S ON sort_name in (SELECT "Beer".sort FROM "Beer" WHERE "Beer".id_beer = beer_name)
+             JOIN "SortBrewery"  AS SB ON SB.id_sort = S.id_sort
+             JOIN "Brewery" AS B ON "Brewery".id_brewery =  SB.id_brewery;
+
+    INSERT INTO "Part"(id_brewery, size_part) VALUES (id_brew, 4);
+END
+$$;
 
 INSERT INTO "Part" (id_brewery, size_part)
 VALUES ('1', 4),
@@ -386,6 +420,14 @@ CREATE TABLE IF NOT EXISTS "Beer"
     PRIMARY KEY (id_beer)
 );
 CREATE UNIQUE INDEX beer_index ON "Beer" (name_of_beer);
+
+INSERT INTO "Beer"(id_part, id_brewery, name_of_beer, container, drinkAbility, description, color, strength, volume,
+                   price_purchase, price_selling, price_wholesale, sort)
+VALUES ('1', '1', 'Essa', 'tank', 'Very tasty beer', 'qwer', 'bright', '5', '100', '3', '4', '5', 'sds');
+
+INSERT INTO "Beer"(id_part, id_brewery, name_of_beer, container, drinkAbility, description, color, strength, volume,
+                   price_purchase, price_selling, price_wholesale, sort)
+VALUES ('1', '1', 'QWert', 'tank', 'Very tasty beer', 'qwer', 'bright', '5', '100', '3', '4', '5', 'Ale');
 
 
 
