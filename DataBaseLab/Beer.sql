@@ -92,6 +92,12 @@ VALUES ('Beartown', 'Cheshire', 2000),
        ('Bedlam', 'West Sussex', 1998),
        ('Beer Brothers', 'Lancashire', 1999);
 
+INSERT INTO "Brewery" (name, country, year)
+VALUES ('Beartown', 'Cheshire', 2000),
+       ('Beavertown', 'London', 1999),
+       ('Bedlam', 'West Sussex', 1998),
+       ('Beer Brothers', 'Lancashire', 1999);
+
 CREATE TABLE IF NOT EXISTS "Sort"
 (
     id_sort   INT GENERATED ALWAYS AS IDENTITY NOT NULL,
@@ -104,7 +110,6 @@ INSERT INTO "Sort"(sort_name)
 VALUES ('Ale'),
        ('Lager'),
        ('Porter');
-
 
 CREATE TABLE IF NOT EXISTS "SortBrewery"
 (
@@ -128,8 +133,6 @@ VALUES ('1', '1'),
        ('1', '3'),
        ('2', '1'),
        ('2', '3');
-
-
 
 CREATE TABLE IF NOT EXISTS "SupplyAgreement"
 (
@@ -223,17 +226,27 @@ CREATE OR REPLACE PROCEDURE create_part(idInvoice integer)
 AS
 $$
 DECLARE
-    cur          refcursor;
-    beer_name    varchar(20);
-    id_brew  int;
+    cur       refcursor;
+    beer_name varchar(20);
+    id_brew   int;
 BEGIN
-    OPEN cur FOR SELECT * FROM "Beer" WHERE "Beer".id_beer = beer_name;
+
+    SELECT "Invoice".name_of_beer INTO beer_name FROM "Invoice" WHERE "Invoice".id_invoice = idInvoice;
+
+    OPEN cur FOR SELECT "Beer".id_brewery FROM "Beer" WHERE "Beer".name_of_beer = beer_name;
+
+    IF NOT EXISTS(SELECT "Beer".id_brewery FROM "Beer" WHERE "Beer".id_beer = beer_name) THEN
+        RAISE EXCEPTION 'Cannot find this beer';
+    end if;
+
     FETCH cur INTO beer_name;
-    SELECT "Brewery".id_brewery INTO id_brew
-    FROM "Brewery"
-             JOIN "Sort" AS S ON sort_name = beer_name--in (SELECT "Beer".sort FROM "Beer" WHERE "Beer".id_beer = beer_name)
-             JOIN "SortBrewery"  AS SB ON SB.id_sort = S.id_sort
-             JOIN "Brewery" AS B ON "Brewery".id_brewery =  SB.id_brewery;
+
+    --     SELECT "Brewery".id_brewery
+--     INTO id_brew
+--     FROM "Brewery"
+--              JOIN "Sort" AS S ON sort_name = beer_name -- in (SELECT "Beer".sort FROM "Beer" WHERE "Beer".id_beer = beer_name)
+--              JOIN "SortBrewery" AS SB ON SB.id_sort = S.id_sort
+--              JOIN "Brewery" AS B ON "Brewery".id_brewery = SB.id_brewery;
 
     INSERT INTO "Part"(id_brewery, size_part) VALUES (id_brew, 4);
 END
@@ -245,7 +258,6 @@ VALUES ('1', 4),
        ('3', 6),
        ('4', 7),
        ('2', 6);
-
 
 CREATE TABLE IF NOT EXISTS "HalfPart"
 (
@@ -271,7 +283,6 @@ VALUES ('2', '1', '1', 5);
 
 INSERT INTO "HalfPart" (id_wareHouse, id_part, id_brewery, size_half)
 VALUES ('2', '10', '1', 1);
-
 
 CREATE OR REPLACE FUNCTION partions_check()
     RETURNS TRIGGER AS
@@ -383,12 +394,12 @@ begin
 
     INSERT INTO "Invoice" (id_order, ID_PART, ID_AGREEMENT, NAME_OF_BEER, CONTAINER, COUNT, PRICE, data)
     VALUES (NULL, NULL, solution, name_beer, containers, count_of_beer, cost, start_date);
-
 end
 $$;
 
 CALL insert_ivoice(1);
 CALL insert_ivoice(2);
+
 
 CREATE TABLE IF NOT EXISTS "Beer"
 (
@@ -429,6 +440,3 @@ VALUES ('1', '1', 'Essa', 'tank', 'Very tasty beer', 'qwer', 'bright', '5', '100
 INSERT INTO "Beer"(id_part, id_brewery, name_of_beer, container, drinkAbility, description, color, strength, volume,
                    price_purchase, price_selling, price_wholesale, sort)
 VALUES ('1', '1', 'QWert', 'tank', 'Very tasty beer', 'qwer', 'bright', '5', '100', '3', '4', '5', 'Ale');
-
-
-
