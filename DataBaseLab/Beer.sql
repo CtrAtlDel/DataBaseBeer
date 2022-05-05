@@ -218,7 +218,7 @@ CREATE TABLE IF NOT EXISTS "Part"
     size_part  int                              NOT NUll CHECK ( "Part".size_part > 0 ),
     PRIMARY KEY (id_part)
 );
-CREATE OR REPLACE PROCEDURE create_partion(idInvoice integer)
+CREATE OR REPLACE PROCEDURE create_part(idInvoice integer)
     LANGUAGE plpgsql
 AS
 $$
@@ -227,10 +227,11 @@ DECLARE
     beer_name    varchar(20);
     id_brew  int;
 BEGIN
-
+    OPEN cur FOR SELECT * FROM "Beer" WHERE "Beer".id_beer = beer_name;
+    FETCH cur INTO beer_name;
     SELECT "Brewery".id_brewery INTO id_brew
     FROM "Brewery"
-             JOIN "Sort" AS S ON sort_name in (SELECT "Beer".sort FROM "Beer" WHERE "Beer".id_beer = beer_name)
+             JOIN "Sort" AS S ON sort_name = beer_name--in (SELECT "Beer".sort FROM "Beer" WHERE "Beer".id_beer = beer_name)
              JOIN "SortBrewery"  AS SB ON SB.id_sort = S.id_sort
              JOIN "Brewery" AS B ON "Brewery".id_brewery =  SB.id_brewery;
 
