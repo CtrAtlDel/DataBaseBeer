@@ -7,10 +7,6 @@ from string import digits
 import random
 import datetime
 
-
-
-
-
 def get_random_str(countOfWarehouse): # количество складов 
     universaryCode = []
     for i in range(0, countOfWarehouse):

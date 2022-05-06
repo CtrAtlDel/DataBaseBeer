@@ -1,6 +1,6 @@
 from Inserter import get_random_int, get_random_str
 
-    # beer
+# beer
 beerNames = ['Garage','Essa','Spatten','Miller','Ohota', 'Corona']
 beerContainer = ['bottle', 'barrel', 'tank', 'keg']
 drinkAbility = ['Good', 'Execelent', 'Middle', 'Not so bad']
@@ -11,8 +11,6 @@ volume = [1, 5, 10, 100]
 pricePurchase = [10, 12, 15, 17, 20] # за 1 литр
 priceSelling = [20, 24, 30, 34, 40] 
 priceWholeSle = [40, 48, 60, 80]
-
-
 
 # warehouse
 countOfWarehouse = 10
@@ -27,7 +25,6 @@ information = ['hihihi']
 coordinaties = [(1,1), ( 1, 3), (4, 5), (1,1)]
 
 # Institution
-
 country = ['Russia', 'Germany', 'Britain', 'Africa', 'Albany']
 nameOfBrewery = ['Magic Rock Brewing', 'Mikkeller', 'Omnipollo', 'Cloudwater Brew Co',
                     'Lervig Aktiebryggeri', 'Cantillon', 'Brouwerij De Molen',
