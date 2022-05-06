@@ -1,9 +1,10 @@
 from ast import Break
 from distutils.command.build_scripts import first_line_re
+from transliterate import get_translit_function
 import re
 
 
-def BreweryAndBeerName():
+def getBreweryes():
     brewery = "(МПК) Московская Пивоваренная Компания, («Жигули», «Хамовники», «Моспиво», «Oettinger», «Faxe») Балтика, (" \
             "«Балтика», «Невское», «Ярпиво», «Туборг», «Карлсберг», «Kronenbourg 1664 Blanc»)Жигулёвский пивоваренный " \
             "завод ,(«Жигулевское», «Самарское», «Фон Вакано», «Старая Самара») SUN InBev Russia ,(«BUD», «Клинское», " \
@@ -16,11 +17,10 @@ def BreweryAndBeerName():
             "Lervig Aktiebryggeri, Cantillon, Brouwerij De Molen," \
             "Magic Rock Brewing, 'Stone Brewing Berlin, Beavertown "
 
-    brewerys = list(map(str.strip, re.sub(r'\([^()]*\)', '', brewery).split(","))) 
+    return list(map(str.strip, re.sub(r'\([^()]*\)', '', brewery).split(","))) 
 
-    print(brewerys)
     
 
-print(BreweryAndBeerName())
+print(())
     
 

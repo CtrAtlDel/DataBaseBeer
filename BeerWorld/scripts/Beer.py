@@ -1,4 +1,5 @@
 from Inserter import get_random_int, get_random_str
+from Slicer import getBreweryAndBeerName, getBreweryes
 
 # beer
 beerNames = ['Garage',
@@ -8,6 +9,7 @@ beerNames = ['Garage',
     'Ohota',
     'Corona',
     '']
+    
 beerContainer = ['bottle', 'barrel', 'tank', 'keg']
 drinkAbility = ['Good', 'Execelent', 'Middle', 'Not so bad']
 discription = 'description'
@@ -31,15 +33,18 @@ information = ['hihihi']
 coordinaties = [(1,1), ( 1, 3), (4, 5), (1,1)]
 
 # Institution
-country = ['Russia', 'Germany', 'Britain', 'Africa', 'Albany']
-nameOfBrewery = ['Magic Rock Brewing', 'Mikkeller', 'Omnipollo', 'Cloudwater Brew Co',
-                    'Lervig Aktiebryggeri', 'Cantillon', 'Brouwerij De Molen',
-                    'Magic Rock Brewing', 'Stone Brewing Berlin', 'Beavertown'
-                    ]
+country = ['Russia', 'Germany', 'Britain', 'Africa', 'Albany', 'USA',
+            'Abkhazia', 'Australia', 'Armenia', 'Bahamas', 'Bulgaria', 'Haiti',
+            'Haiti', 'Guatemala', 'Germany', 'Greenland', 'Greece', 'Denmark',
+            'Egypt', 'Israel', 'Jordan', 'Ireland', 'Spain', 'Italy']
+
+nameOfBrewery = getBreweryes()
+
+brew = getBreweryAndBeerName()
 
 # sorts
 sorts = ['Ale', 'Lager', 'Porter', 'Stout', 'Blonde Ale', 'Brown Ales', 'Pale Ale',
-        'Wheat', 'Pilsner', 'Sour Ale']
+        'Wheat', 'Pilsner', 'Sour Ale', '', '', '']
 
 #Warehouse
 

@@ -14,8 +14,6 @@ def get_random_str(countOfWarehouse): # количество складов
         universaryCode.append(str)
     return universaryCode
 
-def get_random_int(countOfInt):
-    return 1
 
 try:
         
@@ -23,17 +21,11 @@ try:
     conn.autocommit=False
     cur = conn.cursor()
 
-    for i in range(0, len(nameOfBrewery)):
-        name = nameOfBrewery[i]
-        years = random.choice([1700, 1704, 1766, 1800, 1891, 1935, 1983])
-        cntry = random.choice(country)
-
-        cur.execute('INSERT INTO "Brewery" (name, country, year) VALUES (%s, %s, %s)',
+    cur.execute('INSERT INTO "Brewery" (name, country, year) VALUES (%s, %s, %s)',
         (name,
         cntry,
         str(years))
         )
-    
 
 except (Exception, psycopg2.DatabaseError) as error :
     print ("Ошибка в транзакции. Отмена всех остальных операций транзакции", error)
