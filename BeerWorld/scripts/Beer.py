@@ -1,7 +1,13 @@
 from Inserter import get_random_int, get_random_str
 
 # beer
-beerNames = ['Garage','Essa','Spatten','Miller','Ohota', 'Corona']
+beerNames = ['Garage',
+    'Essa',
+    'Spatten',
+    'Miller',
+    'Ohota',
+    'Corona',
+    '']
 beerContainer = ['bottle', 'barrel', 'tank', 'keg']
 drinkAbility = ['Good', 'Execelent', 'Middle', 'Not so bad']
 discription = 'description'
