@@ -61,27 +61,28 @@ CREATE OR REPLACE PROCEDURE print_warehouse(name_beer varchar(20))
 AS
 $$
 DECLARE
-    result record;
+    result integer;
     cur CURSOR FOR SELECT id_warehouse
                    FROM "Beer",
                         "WareHouse"
                    WHERE id_part in (SELECT id_part
                                      FROM "Part"
                                      WHERE id_part in (SELECT id_part FROM "HalfPart"))
-                     AND name_of_beer = name_beer;
+                     AND name_of_beer = $1
+                   ORDER BY id_wareHouse DESC;
 BEGIN
     OPEN cur;
     LOOP
-        FETCH id_warehouse INTO result;
+        FETCH cur INTO result;
         IF NOT FOUND THEN EXIT; END IF;
         RAISE NOTICE 'Warehouse is %', result;
     END LOOP;
     CLOSE cur;
-    RETURN ;
+    RETURN;
 END
 $$;
 
-CALL print_warehouse('Ale');
+CALL print_warehouse('Essa');
 
 
 CREATE TABLE IF NOT EXISTS "InstitutionWarehouse"
@@ -116,14 +117,8 @@ INSERT INTO "Brewery" (name, country, year)
 VALUES ('Beartown', 'Cheshire', 2000),
        ('Beavertown', 'London', 1999),
        ('Bedlam', 'West Sussex', 1998),
-
        ('Beer Brothers', 'Lancashire', 1999);
 
-INSERT INTO "Brewery" (name, country, year)
-VALUES ('Beartown', 'Cheshire', 2000),
-       ('Beavertown', 'London', 1999),
-       ('Bedlam', 'West Sussex', 1998),
-       ('Beer Brothers', 'Lancashire', 1999);
 
 CREATE TABLE IF NOT EXISTS "Sort"
 (
@@ -196,6 +191,9 @@ VALUES ('1', 'QWert', 'tank', 400, 50, '1997-08-24', '20', '30', 'bab', '40:00:0
 INSERT INTO "SupplyAgreement"(id_institution, name_beer, container, count_of_beer, cost, start_date, account_number,
                               prepayment, name_of_institution, delivery_period, count_of_delivery, isImporter)
 VALUES ('1', 'Essa', 'tank', 400, 50, '1997-08-24', '20', '30', 'bab', '40:00:00', 20, True);
+INSERT INTO "SupplyAgreement"(id_institution, name_beer, container, count_of_beer, cost, start_date, account_number,
+                              prepayment, name_of_institution, delivery_period, count_of_delivery, isImporter)
+VALUES ('1', 'Carlsberg', 'tank', 400, 50, '1997-08-24', '20', '30', 'bab', '40:00:00', 20, True);
 
 
 CREATE TABLE IF NOT EXISTS "Check"
@@ -503,6 +501,14 @@ VALUES ('1', '1', 'Essa', 'tank', 'Very tasty beer', 'qwer', 'bright', '5', '100
 INSERT INTO "Beer"(id_part, id_brewery, name_of_beer, container, drinkAbility, description, color, strength, volume,
                    price_purchase, price_selling, price_wholesale, sort)
 VALUES ('1', '1', 'QWert', 'tank', 'Very tasty beer', 'qwer', 'bright', '5', '100', '3', '4', '5', 'Ale');
+
+INSERT INTO "Beer"(id_part, id_brewery, name_of_beer, container, drinkAbility, description, color, strength, volume,
+                   price_purchase, price_selling, price_wholesale, sort)
+VALUES ('1', '1', 'Miller', 'tank', 'Very tasty beer', 'qwer', 'bright', '5', '100', '3', '4', '5', 'Ale');
+
+INSERT INTO "Beer"(id_part, id_brewery, name_of_beer, container, drinkAbility, description, color, strength, volume,
+                   price_purchase, price_selling, price_wholesale, sort)
+VALUES ('2', '1', 'Ohota', 'tank', 'Very tasty beer', 'qwer', 'bright', '5', '100', '3', '4', '5', 'Ale');
 
 -- Минимальная и максимальная стоимость актива за каждый месяц (простой)
 SELECT MIN(price) as min, MAX(price) as max, DATE_PART('month', data) as month
