@@ -8,7 +8,6 @@ CREATE DOMAIN type_phone_number AS varchar(20)
         VALUE ~ '^((8|\+7)[\- ]?)?(\(?\d{3}\)?[\- ]?)?[\d\- ]{7,10}$'
         );
 
-
 CREATE TABLE IF NOT EXISTS "Institution"
 (
     id_institution INT GENERATED ALWAYS AS IDENTITY NOT NULL,
@@ -31,7 +30,6 @@ VALUES ('Nora Cafe', 'Not address', '+79099090990', 'bar', 'middle'),
        ('Devine', 'Not address', '+79099090990', 'bar', 'middle'),
        ('Tanias of Hampstead', 'Not address', '+79099090990', 'bar', 'middle'),
        ('Kennington Lane Cafe', 'Not address', '+79099090990', 'bar', 'middle');
-
 
 CREATE TABLE IF NOT EXISTS "WareHouse"
 (
@@ -57,6 +55,34 @@ VALUES ('0000', 'some address', 400, '+79095045090', 'Oleg', 'not info', '(10,20
 INSERT INTO "WareHouse" (university_code, address, capacity, phone_number, boss, information, coordinates)
 VALUES ('0001', 'some address', 500, '+79999999999', 'Boris', 'not info', '(15,10)'),
        ('0010', 'bad address', 600, '+79090400200', 'Olga', 'not info too', '(90, 100)');
+
+CREATE OR REPLACE PROCEDURE print_warehouse(name_beer varchar(20))
+    LANGUAGE plpgsql
+AS
+$$
+DECLARE
+    result record;
+    cur CURSOR FOR SELECT id_warehouse
+                   FROM "Beer",
+                        "WareHouse"
+                   WHERE id_part in (SELECT id_part
+                                     FROM "Part"
+                                     WHERE id_part in (SELECT id_part FROM "HalfPart"))
+                     AND name_of_beer = name_beer;
+BEGIN
+    OPEN cur;
+    LOOP
+        FETCH id_warehouse INTO result;
+        IF NOT FOUND THEN EXIT; END IF;
+        RAISE NOTICE 'Warehouse is %', result;
+    END LOOP;
+    CLOSE cur;
+    RETURN ;
+END
+$$;
+
+CALL print_warehouse('Ale');
+
 
 CREATE TABLE IF NOT EXISTS "InstitutionWarehouse"
 (
@@ -90,6 +116,7 @@ INSERT INTO "Brewery" (name, country, year)
 VALUES ('Beartown', 'Cheshire', 2000),
        ('Beavertown', 'London', 1999),
        ('Bedlam', 'West Sussex', 1998),
+
        ('Beer Brothers', 'Lancashire', 1999);
 
 INSERT INTO "Brewery" (name, country, year)
@@ -154,19 +181,22 @@ CREATE TABLE IF NOT EXISTS "SupplyAgreement"
 
     name_of_institution varchar(20)                      NOT NULL,
 
-
     delivery_period     INTERVAL                         NOT NULL,
     count_of_delivery   INT                              NOT NULL
         CONSTRAINT positive_count CHECK ( count_of_delivery > 0 ),
     pay                 type_of_payment                  NOT NULL DEFAULT 'cash',
-
-    isImporter          BOOLEAN                                   DEFAULT FALSE,
+    isImporter          BOOLEAN                                   DEFAULT TRUE,
     PRIMARY KEY (id_agreement)
 );
 
 INSERT INTO "SupplyAgreement"(id_institution, name_beer, container, count_of_beer, cost, start_date, account_number,
                               prepayment, name_of_institution, delivery_period, count_of_delivery)
 VALUES ('1', 'QWert', 'tank', 400, 50, '1997-08-24', '20', '30', 'bab', '40:00:00', 20);
+
+INSERT INTO "SupplyAgreement"(id_institution, name_beer, container, count_of_beer, cost, start_date, account_number,
+                              prepayment, name_of_institution, delivery_period, count_of_delivery, isImporter)
+VALUES ('1', 'Essa', 'tank', 400, 50, '1997-08-24', '20', '30', 'bab', '40:00:00', 20, True);
+
 
 CREATE TABLE IF NOT EXISTS "Check"
 (
@@ -182,6 +212,44 @@ CREATE TABLE IF NOT EXISTS "Check"
 
     PRIMARY KEY (id_check)
 );
+
+CREATE OR REPLACE FUNCTION create_check()
+    RETURNS TRIGGER AS
+$$
+DECLARE
+    sum int;
+BEGIN
+
+    IF NOT EXISTS(SELECT price_purchase FROM "Beer" WHERE name_of_beer = NEW.name_beer) THEN
+        RAISE EXCEPTION 'Cannot find this name of beer';
+    end if;
+
+    IF NEW.isImporter = TRUE THEN
+
+        sum = NEW.count_of_beer * (SELECT price_purchase FROM "Beer" WHERE name_of_beer = NEW.name_beer);
+        INSERT INTO "Check"(id_agreement, account_number, sum) VALUES (NEW.id_agreement, NEW.account_number, sum);
+        INSERT INTO "Orders"(agreement_id, all_sum, all_count, half, all_half, tracking, isHalfPayed, isAllPayed)
+        VALUES (NEW.id_agreement, sum, 0, NEW.count_of_beer, 'inBrewery', false, false);
+    ELSIF NEW.isImporter = FALSE THEN -- если это не заказчик
+
+        sum = NEW.count_of_beer * (SELECT price_wholesale FROM "Beer" WHERE name_of_beer = NEW.name_beer);
+        INSERT INTO "Check"(id_agreement, account_number, sum) VALUES (NEW.id_agreement, NEW.account_number, sum);
+        INSERT INTO "Orders"(agreement_id, all_sum, all_count, half, all_half, tracking, isHalfPayed, isAllPayed)
+        VALUES (NEW.id_agreement, sum, 0, NEW.count_of_beer, 'inBrewery', true, true);
+    end if;
+
+
+    RETURN NULL;
+END
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER create_check on "SupplyAgreement";
+CREATE TRIGGER create_check
+    AFTER INSERT OR UPDATE
+    ON "SupplyAgreement"
+    FOR EACH ROW
+EXECUTE PROCEDURE create_check();
+
 
 CREATE TABLE IF NOT EXISTS "Orders"
 (
@@ -241,12 +309,6 @@ BEGIN
 
     FETCH cur INTO beer_name;
 
-    --     SELECT "Brewery".id_brewery
---     INTO id_brew
---     FROM "Brewery"
---              JOIN "Sort" AS S ON sort_name = beer_name -- in (SELECT "Beer".sort FROM "Beer" WHERE "Beer".id_beer = beer_name)
---              JOIN "SortBrewery" AS SB ON SB.id_sort = S.id_sort
---              JOIN "Brewery" AS B ON "Brewery".id_brewery = SB.id_brewery;
 
     INSERT INTO "Part"(id_brewery, size_part) VALUES (id_brew, 4);
 END
@@ -292,14 +354,12 @@ DECLARE
 BEGIN
     IF NEW.size_half >= 3 THEN
         RAISE EXCEPTION 'Bad size of half partition';
-        RETURN NULL;
     end if;
 
     SELECT id_brewery INTO belong FROM "Part" WHERE id_part = NEW.id_part;
 
     IF belong.id_brewery != NEW.id_brewery THEN
         RAISE EXCEPTION 'Bad size of half partition';
-        RETURN NULL;
     END IF;
 
     IF NEW.size_half < 3 THEN
@@ -352,6 +412,9 @@ CREATE TABLE IF NOT EXISTS "Invoice"
     data         DATE                             NOT NULL
 );
 CREATE INDEX data_indx ON "Invoice" (data);
+
+INSERT INTO "Invoice"(id_order, id_brewery, id_part, id_agreement, name_of_beer, container, count, price, data)
+VALUES (NULL, NULL, NULL, NULL, 'Essa', 'bottle', 10, 10.1, '40:00:00');
 
 CREATE OR REPLACE PROCEDURE insert_ivoice(idAgreements integer)
     LANGUAGE plpgsql
@@ -440,3 +503,34 @@ VALUES ('1', '1', 'Essa', 'tank', 'Very tasty beer', 'qwer', 'bright', '5', '100
 INSERT INTO "Beer"(id_part, id_brewery, name_of_beer, container, drinkAbility, description, color, strength, volume,
                    price_purchase, price_selling, price_wholesale, sort)
 VALUES ('1', '1', 'QWert', 'tank', 'Very tasty beer', 'qwer', 'bright', '5', '100', '3', '4', '5', 'Ale');
+
+-- Минимальная и максимальная стоимость актива за каждый месяц (простой)
+SELECT MIN(price) as min, MAX(price) as max, DATE_PART('month', data) as month
+FROM "Invoice"
+GROUP BY data;
+
+-- Все пивоварни в которых есть сорт "Ale" (сложный, средний)
+SELECT country
+FROM "Brewery"
+         JOIN "SortBrewery" SB ON "Brewery".id_brewery = SB.id_brewery
+         JOIN "Sort" S on SB.id_sort = S.id_sort
+WHERE sort_name = 'Ale';
+
+-- Найти количество складов, на котором лежит пиво вот Esse (сложный)
+SELECT COUNT(*) as count
+FROM "WareHouse"
+         JOIN "HalfPart" ON "WareHouse".id_wareHouse = "HalfPart".id_wareHouse
+         JOIN "Part" P on P.id_part = "HalfPart".id_part
+         JOIN "Invoice" I ON P.id_part = I.id_part
+         JOIN "SupplyAgreement" SA on I.id_agreement = SA.id_agreement
+WHERE name_of_beer = 'Esse';
+
+SELECT "Check".account_number
+FROM "Check"
+         JOIN "SupplyAgreement" SA on SA.id_agreement = "Check".id_agreement
+         JOIN "Invoice" I on SA.id_agreement = I.id_agreement
+         JOIN "Part" P on P.id_part = I.id_part
+         JOIN "HalfPart" HP on P.id_part = HP.id_part
+         JOIN "Beer" B on P.id_part = B.id_part
+WHERE B.price_purchase > 1000
+  AND B.price_purchase < 5000;

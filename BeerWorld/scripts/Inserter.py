@@ -1,11 +1,12 @@
 from itertools import count
+from re import I
 from types import coroutine
 from webbrowser import get
 import psycopg2
 from random import choice
 from string import digits
-import random
-import datetime
+from Beer import beerNames
+from scripts.Slicer import getBreweryes
 
 def get_random_str(countOfWarehouse): # количество складов 
     universaryCode = []
@@ -21,6 +22,23 @@ try:
     conn.autocommit=False
     cur = conn.cursor()
 
+    brewery = getBreweryes()
+    
+    j = 0
+    for i in range(3, len(beerNames)):
+        j += 1
+        id_part = i
+        id_brewery = i
+        cur.execute('INSERT INTO "Beer"(id_part, id_brewery, name_of_beer, container, drinkAbility, description, color, strength, volume,\
+                    price_purchase, price_selling, price_wholesale, sort)\
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)',
+        (name,
+        cntry,
+        str(years))
+        )
+
+
+    # Example of instertinh
     cur.execute('INSERT INTO "Brewery" (name, country, year) VALUES (%s, %s, %s)',
         (name,
         cntry,

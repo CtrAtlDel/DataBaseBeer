@@ -20,7 +20,5 @@ def getBreweryes():
     return list(map(str.strip, re.sub(r'\([^()]*\)', '', brewery).split(","))) 
 
     
-
-print(())
     
 
