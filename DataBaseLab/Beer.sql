@@ -62,9 +62,12 @@ AS
 $$
 DECLARE
     result integer;
-    cur CURSOR FOR SELECT id_warehouse FROM "WareHouse"
-        WHERE id_wareHouse in (SELECT id_part FROM "HalfPart"
-            WHERE id_part in (SELECT id_part FROM "Beer" WHERE name_of_beer = $1));
+    cur CURSOR FOR SELECT id_warehouse
+                   FROM "WareHouse"
+                   WHERE id_wareHouse in (SELECT id_part
+                                          FROM "HalfPart"
+                                          WHERE id_part in (SELECT id_part FROM "Beer" WHERE name_of_beer = $1))
+                   ORDER BY id_wareHouse DESC ;
 BEGIN
     OPEN cur;
     LOOP
@@ -79,7 +82,9 @@ $$;
 
 CALL print_warehouse('Essa');
 
-SELECT DISTINCT id_part FROM "HalfPart" WHERE id_part in ( SELECT id_part FROM "Beer" WHERE name_of_beer = 'Essa');
+SELECT DISTINCT id_part
+FROM "HalfPart"
+WHERE id_part in (SELECT id_part FROM "Beer" WHERE name_of_beer = 'Essa');
 
 CREATE TABLE IF NOT EXISTS "InstitutionWarehouse"
 (
@@ -122,6 +127,7 @@ CREATE TABLE IF NOT EXISTS "Sort"
     sort_name varchar(20) UNIQUE               NOT NULl,
     PRIMARY KEY (id_sort)
 );
+DROP INDEX sort_name_indx;
 CREATE UNIQUE INDEX sort_name_indx ON "Sort" (lower(sort_name));
 
 INSERT INTO "Sort"(sort_name)
@@ -558,3 +564,5 @@ FROM "Check"
          JOIN "Beer" B on P.id_part = B.id_part
 WHERE B.price_purchase > 1000
   AND B.price_purchase < 5000;
+
+---------------Service---------------

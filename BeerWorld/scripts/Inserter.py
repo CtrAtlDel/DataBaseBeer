@@ -1,12 +1,9 @@
-from itertools import count
-from re import I
-from types import coroutine
-from webbrowser import get
+
 import psycopg2
 from random import choice
 from string import digits
 from Beer import beerNames
-from scripts.Slicer import getBreweryes
+
 
 def get_random_str(countOfWarehouse): # количество складов 
     universaryCode = []

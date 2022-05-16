@@ -44,7 +44,7 @@ brew = getBreweryAndBeerName()
 
 # sorts
 sorts = ['Ale', 'Lager', 'Porter', 'Stout', 'Blonde Ale', 'Brown Ales', 'Pale Ale',
-        'Wheat', 'Pilsner', 'Sour Ale', '', '', '']
+        'Wheat', 'Pilsner', 'Sour Ale', 'Russian', 'zxc', 'IPA']
 
 #Warehouse
 
