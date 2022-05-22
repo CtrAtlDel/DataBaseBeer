@@ -5,7 +5,7 @@ import random
 
 
 def get_random_str(length):
-    return ''.join(random.choices(string.ascii_uppercase + string.digits, k = length)) 
+    return ''.join(random.choices(string.ascii_uppercase + string.digits, k = length))  
 
 try:
         
@@ -13,11 +13,14 @@ try:
     conn.autocommit=False
     cur = conn.cursor()
 
-    sorts = ['Ale', 'Lager', 'Porter', 'Stout', 'Blonde Ale', 'Brown Ales', 'Pale Ale',
-        'Wheat', 'Pilsner', 'Sour Ale', 'Russian', 'zxc', 'IPA']
+    cur.execute('SELECT id_brewery FROM "Brewery"')
+    id_brewery = [id[0] for id in cur.fetchall()]
 
-    for i in range(0, 9990):
-        cur.execute('INSERT INTO "Sort"(sort_name) VALUES (%s)',[str(get_random_str(10))])
+    for i in range(0, 10_000):
+        cur.execute('INSERT INTO "Part" (id_brewery, size_part) VALUES (%s, %s)',
+            (random.choice(id_brewery),
+            randint(1, 10))
+        )
 
 except (Exception, psycopg2.DatabaseError) as error :
     print ("Ошибка в транзакции. Отмена всех остальных операций транзакции", error)

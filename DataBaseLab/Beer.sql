@@ -22,7 +22,8 @@ CREATE TABLE IF NOT EXISTS "Institution"
     status         status_institution               NOT NULL,
     PRIMARY KEY (id_institution)
 );
-CREATE UNIQUE INDEX name_indx ON "Institution" (lower(name));
+-- drop index name_indx;
+-- CREATE UNIQUE INDEX name_indx ON "Institution" (lower(name));
 
 INSERT INTO "Institution" (name, address, phone_number, type, status)
 VALUES ('Nora Cafe', 'Not address', '+79099090990', 'bar', 'middle'),
@@ -47,8 +48,8 @@ CREATE TABLE IF NOT EXISTS "WareHouse"
 
     PRIMARY KEY (id_wareHouse)
 );
-CREATE UNIQUE INDEX wareHouse_number_indx ON "WareHouse" (phone_number);
-CREATE INDEX wareHouse_code_indx ON "WareHouse" (lower(university_code));
+-- CREATE UNIQUE INDEX wareHouse_number_indx ON "WareHouse" (phone_number);
+-- CREATE INDEX wareHouse_code_indx ON "WareHouse" (lower(university_code));
 
 INSERT INTO "WareHouse" (university_code, address, capacity, phone_number, boss, information, coordinates)
 VALUES ('0000', 'some address', 400, '+79095045090', 'Oleg', 'not info', '(10,20)');
@@ -82,14 +83,15 @@ $$;
 
 CALL print_warehouse('Essa');
 
+
 SELECT DISTINCT id_part
 FROM "HalfPart"
 WHERE id_part in (SELECT id_part FROM "Beer" WHERE name_of_beer = 'Essa');
 
 CREATE TABLE IF NOT EXISTS "InstitutionWarehouse"
 (
-    id_wareHouse   INT UNIQUE NOT NULL,
-    id_institution INT        NOT NULL,
+    id_wareHouse   INT NOT NULL,
+    id_institution INT NOT NULL,
     CONSTRAINT fk1
         FOREIGN KEY (id_wareHouse)
             REFERENCES "WareHouse" (id_wareHouse)
@@ -127,8 +129,8 @@ CREATE TABLE IF NOT EXISTS "Sort"
     sort_name varchar(20) UNIQUE               NOT NULl,
     PRIMARY KEY (id_sort)
 );
-DROP INDEX sort_name_indx;
-CREATE UNIQUE INDEX sort_name_indx ON "Sort" (lower(sort_name));
+-- DROP INDEX sort_name_indx;
+-- CREATE INDEX sort_name_indx ON "Sort" (lower(sort_name));
 
 INSERT INTO "Sort"(sort_name)
 VALUES ('Ale'),
@@ -202,12 +204,15 @@ INSERT INTO "SupplyAgreement"(id_institution, name_beer, container, count_of_bee
                               prepayment, name_of_institution, delivery_period, count_of_delivery, isImporter)
 VALUES ('2', 'Essa', 'tank', 400, 50, '1997-08-24', '20', '30', 'bab', '40:00:00', 20, True);
 
+INSERT INTO "SupplyAgreement"(id_institution, name_beer, container, count_of_beer, cost, start_date, account_number,
+                              prepayment, name_of_institution, delivery_period, count_of_delivery, isImporter)
+VALUES ('2', 'Essa', 'tank', 400, 50, '1997-08-24', '20', '30', 'bab', '40:00:00', 20, True);
 
 CREATE TABLE IF NOT EXISTS "Check"
 (
     id_check       INT GENERATED ALWAYS AS IDENTITY NOT NULL,
 
-    id_agreement   INT UNIQUE                       NOT NULL,
+    id_agreement   INT                        NOT NULL,
     CONSTRAINT fk FOREIGN KEY (id_agreement) REFERENCES "SupplyAgreement" (id_agreement)
         ON DELETE CASCADE
         ON UPDATE CASCADE,
@@ -234,26 +239,24 @@ BEGIN
         sum = NEW.count_of_beer * (SELECT price_purchase FROM "Beer" WHERE name_of_beer = NEW.name_beer);
         INSERT INTO "Check"(id_agreement, account_number, sum) VALUES (NEW.id_agreement, NEW.account_number, sum);
         INSERT INTO "Orders"(agreement_id, all_sum, all_count, half, all_half, tracking, isHalfPayed, isAllPayed)
-        VALUES (NEW.id_agreement, sum, 0, NEW.count_of_beer, 'inBrewery', false, false);
+        VALUES (new.id_agreement,  20.0, new.count_of_beer, 1, 5, 'inBrewery', false, false);
     ELSIF NEW.isImporter = FALSE THEN -- если это не заказчик
-
         sum = NEW.count_of_beer * (SELECT price_wholesale FROM "Beer" WHERE name_of_beer = NEW.name_beer);
         INSERT INTO "Check"(id_agreement, account_number, sum) VALUES (NEW.id_agreement, NEW.account_number, sum);
+        VALUES (NEW.id_agreement, NEW.account_number, sum);
         INSERT INTO "Orders"(agreement_id, all_sum, all_count, half, all_half, tracking, isHalfPayed, isAllPayed)
-        VALUES (NEW.id_agreement, sum, 0, NEW.count_of_beer, 'inBrewery', true, true);
+        VALUES (new.id_agreement,  20.0, new.count_of_beer, 1, 5, 'inBrewery', true, true);
     end if;
-
-
     RETURN NULL;
 END
 $$ LANGUAGE plpgsql;
 
-DROP TRIGGER create_check on "SupplyAgreement";
-CREATE TRIGGER create_check
-    AFTER INSERT OR UPDATE
-    ON "SupplyAgreement"
-    FOR EACH ROW
-EXECUTE PROCEDURE create_check();
+-- DROP TRIGGER create_check on "SupplyAgreement";
+-- CREATE TRIGGER create_check
+--     AFTER INSERT OR UPDATE
+--     ON "SupplyAgreement"
+--     FOR EACH ROW
+-- EXECUTE PROCEDURE create_check();
 
 
 CREATE TABLE IF NOT EXISTS "Orders"
@@ -282,6 +285,10 @@ CREATE TABLE IF NOT EXISTS "Orders"
 
     PRIMARY KEY (id_order)
 );
+
+INSERT INTO "Orders"(agreement_id, all_sum, all_count, half, all_half, tracking, isHalfPayed, isAllPayed) Val
+
+
 
 CREATE TABLE IF NOT EXISTS "Part"
 (
@@ -384,12 +391,12 @@ BEGIN
 END
 $$ LANGUAGE plpgsql;
 
-DROP TRIGGER partions_check on "HalfPart";
-CREATE TRIGGER partions_check
-    BEFORE INSERT OR UPDATE
-    ON "HalfPart"
-    FOR EACH ROW
-EXECUTE PROCEDURE partions_check();
+-- DROP TRIGGER partions_check on "HalfPart";
+-- CREATE TRIGGER partions_check
+--     BEFORE INSERT OR UPDATE
+--     ON "HalfPart"
+--     FOR EACH ROW
+-- EXECUTE PROCEDURE partions_check();
 
 
 CREATE TABLE IF NOT EXISTS "Invoice"
@@ -427,7 +434,8 @@ CREATE TABLE IF NOT EXISTS "Invoice"
     price        money                            NOT NULL,
     data         DATE                             NOT NULL
 );
-CREATE INDEX data_indx ON "Invoice" (data);
+-- drop index data_indx;
+-- CREATE INDEX data_indx ON "Invoice" (data);
 
 INSERT INTO "Invoice"(id_order, id_brewery, id_part, id_agreement, name_of_beer, container, count, price, data)
 VALUES (NULL, NULL, NULL, NULL, 'Essa', 'bottle', 10, 10.1, '40:00:00');
@@ -479,7 +487,6 @@ $$;
 CALL insert_ivoice(1);
 CALL insert_ivoice(2);
 
-
 CREATE TABLE IF NOT EXISTS "Beer"
 (
     id_beer         INT GENERATED ALWAYS AS IDENTITY,
@@ -510,8 +517,9 @@ CREATE TABLE IF NOT EXISTS "Beer"
 
     PRIMARY KEY (id_beer)
 );
-DROP INDEX beer_index;
-CREATE UNIQUE INDEX beer_index ON "Beer" (name_of_beer);
+
+-- DROP INDEX beer_index;
+-- CREATE  INDEX beer_index ON "Beer" (name_of_beer);
 
 INSERT INTO "Beer"(id_part, id_brewery, name_of_beer, container, drinkAbility, description, color, strength, volume,
                    price_purchase, price_selling, price_wholesale, sort)
@@ -542,7 +550,7 @@ GROUP BY data;
 -- Все пивоварни в которых есть сорт "Ale" (сложный, средний)
 SELECT country
 FROM "Brewery"
-         JOIN "SortBrewery" SB ON "Brewery".id_brewery = SB.id_brewery
+         JOIN "SortBrewery" SB on "Brewery".id_brewery = SB.id_brewery
          JOIN "Sort" S on SB.id_sort = S.id_sort
 WHERE sort_name = 'Ale';
 
@@ -564,5 +572,3 @@ FROM "Check"
          JOIN "Beer" B on P.id_part = B.id_part
 WHERE B.price_purchase > 1000
   AND B.price_purchase < 5000;
-
----------------Service---------------
