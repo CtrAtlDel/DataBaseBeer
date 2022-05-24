@@ -45,6 +45,8 @@ try:
     cursor.execute('SELECT id_beer FROM "Beer"')
     id_beer = [id[0] for id in cursor.fetchall()]
 
+
+
     cursor.execute('SELECT name_of_beer FROM "Beer"')
     name_of_beer = [id[0] for id in cursor.fetchall()]
 

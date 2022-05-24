@@ -22,8 +22,8 @@ CREATE TABLE IF NOT EXISTS "Institution"
     status         status_institution               NOT NULL,
     PRIMARY KEY (id_institution)
 );
--- drop index name_indx;
--- CREATE UNIQUE INDEX name_indx ON "Institution" (lower(name));
+drop index name_indx;
+CREATE INDEX name_indx ON "Institution" (lower(name));
 
 INSERT INTO "Institution" (name, address, phone_number, type, status)
 VALUES ('Nora Cafe', 'Not address', '+79099090990', 'bar', 'middle'),
@@ -48,8 +48,8 @@ CREATE TABLE IF NOT EXISTS "WareHouse"
 
     PRIMARY KEY (id_wareHouse)
 );
--- CREATE UNIQUE INDEX wareHouse_number_indx ON "WareHouse" (phone_number);
--- CREATE INDEX wareHouse_code_indx ON "WareHouse" (lower(university_code));
+CREATE INDEX wareHouse_number_indx ON "WareHouse" (phone_number);
+CREATE INDEX wareHouse_code_indx ON "WareHouse" (lower(university_code));
 
 INSERT INTO "WareHouse" (university_code, address, capacity, phone_number, boss, information, coordinates)
 VALUES ('0000', 'some address', 400, '+79095045090', 'Oleg', 'not info', '(10,20)');
@@ -129,8 +129,8 @@ CREATE TABLE IF NOT EXISTS "Sort"
     sort_name varchar(20) UNIQUE               NOT NULl,
     PRIMARY KEY (id_sort)
 );
--- DROP INDEX sort_name_indx;
--- CREATE INDEX sort_name_indx ON "Sort" (lower(sort_name));
+DROP INDEX sort_name_indx;
+CREATE INDEX sort_name_indx ON "Sort" (lower(sort_name));
 
 INSERT INTO "Sort"(sort_name)
 VALUES ('Ale'),
@@ -212,7 +212,7 @@ CREATE TABLE IF NOT EXISTS "Check"
 (
     id_check       INT GENERATED ALWAYS AS IDENTITY NOT NULL,
 
-    id_agreement   INT                        NOT NULL,
+    id_agreement   INT                              NOT NULL,
     CONSTRAINT fk FOREIGN KEY (id_agreement) REFERENCES "SupplyAgreement" (id_agreement)
         ON DELETE CASCADE
         ON UPDATE CASCADE,
@@ -239,24 +239,24 @@ BEGIN
         sum = NEW.count_of_beer * (SELECT price_purchase FROM "Beer" WHERE name_of_beer = NEW.name_beer);
         INSERT INTO "Check"(id_agreement, account_number, sum) VALUES (NEW.id_agreement, NEW.account_number, sum);
         INSERT INTO "Orders"(agreement_id, all_sum, all_count, half, all_half, tracking, isHalfPayed, isAllPayed)
-        VALUES (new.id_agreement,  20.0, new.count_of_beer, 1, 5, 'inBrewery', false, false);
+        VALUES (new.id_agreement, 20.0, new.count_of_beer, 1, 5, 'inBrewery', false, false);
     ELSIF NEW.isImporter = FALSE THEN -- если это не заказчик
         sum = NEW.count_of_beer * (SELECT price_wholesale FROM "Beer" WHERE name_of_beer = NEW.name_beer);
         INSERT INTO "Check"(id_agreement, account_number, sum) VALUES (NEW.id_agreement, NEW.account_number, sum);
         VALUES (NEW.id_agreement, NEW.account_number, sum);
         INSERT INTO "Orders"(agreement_id, all_sum, all_count, half, all_half, tracking, isHalfPayed, isAllPayed)
-        VALUES (new.id_agreement,  20.0, new.count_of_beer, 1, 5, 'inBrewery', true, true);
+        VALUES (new.id_agreement, 20.0, new.count_of_beer, 1, 5, 'inBrewery', true, true);
     end if;
     RETURN NULL;
 END
 $$ LANGUAGE plpgsql;
 
--- DROP TRIGGER create_check on "SupplyAgreement";
--- CREATE TRIGGER create_check
---     AFTER INSERT OR UPDATE
---     ON "SupplyAgreement"
---     FOR EACH ROW
--- EXECUTE PROCEDURE create_check();
+DROP TRIGGER create_check on "SupplyAgreement";
+CREATE TRIGGER create_check
+    AFTER INSERT OR UPDATE
+    ON "SupplyAgreement"
+    FOR EACH ROW
+EXECUTE PROCEDURE create_check();
 
 
 CREATE TABLE IF NOT EXISTS "Orders"
@@ -285,9 +285,6 @@ CREATE TABLE IF NOT EXISTS "Orders"
 
     PRIMARY KEY (id_order)
 );
-
-INSERT INTO "Orders"(agreement_id, all_sum, all_count, half, all_half, tracking, isHalfPayed, isAllPayed) Val
-
 
 
 CREATE TABLE IF NOT EXISTS "Part"
@@ -391,12 +388,12 @@ BEGIN
 END
 $$ LANGUAGE plpgsql;
 
--- DROP TRIGGER partions_check on "HalfPart";
--- CREATE TRIGGER partions_check
---     BEFORE INSERT OR UPDATE
---     ON "HalfPart"
---     FOR EACH ROW
--- EXECUTE PROCEDURE partions_check();
+DROP TRIGGER partions_check on "HalfPart";
+CREATE TRIGGER partions_check
+    BEFORE INSERT OR UPDATE
+    ON "HalfPart"
+    FOR EACH ROW
+EXECUTE PROCEDURE partions_check();
 
 
 CREATE TABLE IF NOT EXISTS "Invoice"
@@ -434,8 +431,8 @@ CREATE TABLE IF NOT EXISTS "Invoice"
     price        money                            NOT NULL,
     data         DATE                             NOT NULL
 );
--- drop index data_indx;
--- CREATE INDEX data_indx ON "Invoice" (data);
+drop index data_indx;
+CREATE INDEX data_indx ON "Invoice" (data);
 
 INSERT INTO "Invoice"(id_order, id_brewery, id_part, id_agreement, name_of_beer, container, count, price, data)
 VALUES (NULL, NULL, NULL, NULL, 'Essa', 'bottle', 10, 10.1, '40:00:00');
@@ -518,8 +515,11 @@ CREATE TABLE IF NOT EXISTS "Beer"
     PRIMARY KEY (id_beer)
 );
 
--- DROP INDEX beer_index;
--- CREATE  INDEX beer_index ON "Beer" (name_of_beer);
+DROP INDEX beer_index;
+CREATE INDEX beer_index ON "Beer" (name_of_beer);
+
+DROP INDEX drinkability_index;
+CREATE INDEX drinkability_index ON "Beer" (drinkAbility);
 
 INSERT INTO "Beer"(id_part, id_brewery, name_of_beer, container, drinkAbility, description, color, strength, volume,
                    price_purchase, price_selling, price_wholesale, sort)
@@ -543,26 +543,40 @@ VALUES ('2', '2', 'Essa', 'tank', 'Very tasty beer', 'qwer', 'bright', '5', '100
 
 
 -- Минимальная и максимальная стоимость актива за каждый месяц (простой)
-SELECT MIN(price) as min, MAX(price) as max, DATE_PART('month', data) as month
+SELECT MIN(price) as min, MAX(price) as max, DATE_PART('month', data) as month, id_agreement
 FROM "Invoice"
-GROUP BY data;
+WHERE id_agreement in (SELECT id_agreement FROM "Orders" WHERE "Orders".all_sum < 1000)
+GROUP BY data, id_agreement
+ORDER BY month DESC;
 
--- Все пивоварни в которых есть сорт "Ale" (сложный, средний)
-SELECT country
-FROM "Brewery"
-         JOIN "SortBrewery" SB on "Brewery".id_brewery = SB.id_brewery
-         JOIN "Sort" S on SB.id_sort = S.id_sort
-WHERE sort_name = 'Ale';
+-- такие заведения, которые заказали пиво с питкостью 'Good'
+SELECT SUM(cost), container, COUNT(id_agreement)
+FROM "SupplyAgreement"
+WHERE "SupplyAgreement".id_institution in (SELECT "Institution".id_institution
+                                           FROM "Institution"
+                                                    join "InstitutionWarehouse" IW
+                                                         on "Institution".id_institution = IW.id_institution
+                                           WHERE IW.id_wareHouse in (SELECT id_wareHouse
+                                                                     FROM "HalfPart"
+                                                                     WHERE id_part in (
+                                                                         Select id_part
+                                                                         FROM "Beer"
+                                                                         WHERE drinkAbility = 'Good'
+                                                                     )))
 
--- Найти количество складов, на котором лежит пиво вот Esse (сложный)
+GROUP BY container;
+
+
+-- Найти количество складов, на котором лежит пиво в таре 'tank'
 SELECT COUNT(*) as count
 FROM "WareHouse"
          JOIN "HalfPart" ON "WareHouse".id_wareHouse = "HalfPart".id_wareHouse
          JOIN "Part" P on P.id_part = "HalfPart".id_part
          JOIN "Invoice" I ON P.id_part = I.id_part
          JOIN "SupplyAgreement" SA on I.id_agreement = SA.id_agreement
-WHERE name_of_beer = 'Esse';
+WHERE I.container = 'tank';
 
+-- Такие чеки, в кторый пиво со стоимостью 500 - 1000
 SELECT "Check".account_number
 FROM "Check"
          JOIN "SupplyAgreement" SA on SA.id_agreement = "Check".id_agreement
@@ -570,5 +584,75 @@ FROM "Check"
          JOIN "Part" P on P.id_part = I.id_part
          JOIN "HalfPart" HP on P.id_part = HP.id_part
          JOIN "Beer" B on P.id_part = B.id_part
-WHERE B.price_purchase > 1000
-  AND B.price_purchase < 5000;
+WHERE B.price_purchase > 500
+  AND B.price_purchase < 1000;
+
+-- Такие пивоварни, на которых хранится заказ стоимостью > 1000
+SELECT name
+FROM "Brewery"
+WHERE id_brewery in (SELECT id_brewery
+                     FROM "Part"
+                     WHERE id_part in (
+                         SELECT "Invoice".id_invoice
+                         FROM "Invoice"
+                         WHERE id_order in (
+                             SELECT "Orders".id_order
+                             FROM "Orders"
+                             WHERE all_sum > 1000
+                               AND isAllPayed = true
+                         )
+                     ));
+
+
+EXPLAIN (ANALYSE)
+SELECT SUM(cost) as sum, container, COUNT(id_agreement)
+FROM "SupplyAgreement"
+WHERE "SupplyAgreement".id_institution in (SELECT "Institution".id_institution
+                                           FROM "Institution"
+                                                    join "InstitutionWarehouse" IW
+                                                         on "Institution".id_institution = IW.id_institution
+                                                    join public."WareHouse" WH on IW.id_wareHouse = WH.id_warehouse
+                                                    join "HalfPart" HP on WH.id_warehouse = HP.id_warehouse
+                                           WHERE IW.id_wareHouse in (SELECT id_wareHouse
+                                                                     FROM "HalfPart"
+                                                                     WHERE id_part in (
+                                                                         SELECT id_part
+                                                                         FROM "Beer"
+                                                                         WHERE drinkAbility = 'Good'
+                                                                     ))
+                                             AND HP.size_half < 3)
+
+GROUP BY container
+ORDER BY sum DESC;
+
+SET enable_seqscan TO off;
+SET enable_bitmapscan TO off;
+SET enable_hashjoin TO off;
+SET enable_nestloop TO off;
+
+SET enable_seqscan TO on;
+SET enable_bitmapscan TO on;
+SET enable_hashjoin TO on;
+SET enable_nestloop TO on;
+SET work_mem TO '300MB';
+SET enable_sort to ON;
+EXPLAIN (ANALYSE)
+SELECT SUM(cost) as sum, container, COUNT(id_agreement)
+FROM "SupplyAgreement"
+WHERE "SupplyAgreement".id_institution in (SELECT "Institution".id_institution
+                                           FROM "Institution"
+                                                    join "InstitutionWarehouse" IW
+                                                         on "Institution".id_institution = IW.id_institution
+                                                    join public."WareHouse" WH on IW.id_wareHouse = WH.id_warehouse
+                                                    join "HalfPart" HP on WH.id_warehouse = HP.id_warehouse
+                                           WHERE IW.id_wareHouse in (SELECT id_wareHouse
+                                                                     FROM "HalfPart"
+                                                                     WHERE id_part in (
+                                                                         SELECT id_part
+                                                                         FROM "Beer"
+                                                                         WHERE drinkAbility = 'Good'
+                                                                     ))
+                                             AND HP.size_half < 3)
+
+GROUP BY container
+ORDER BY sum DESC;;
